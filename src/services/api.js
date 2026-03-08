@@ -1,6 +1,8 @@
-try {
-  const res = await api.get('/moods');
-  // ...
-} catch (error) {
-  console.error('API error', error?.response?.status, error?.response?.data);
-}
+import axios from "axios";
+
+const api = axios.create({
+  
+  baseURL: "https://backend-1-k3zu.onrender.com" 
+});
+
+export default api;
