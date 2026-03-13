@@ -10,12 +10,12 @@
 
     <div class="input-card">
       <div class="field">
-        <label><i class="icon">👤</i> Identify Yourself</label>
+        <label>👤 Identify Yourself</label>
         <input v-model="name" placeholder="Enter your name" :disabled="isSubmitting" />
       </div>
       
       <div class="field">
-        <label><i class="icon">✨</i> Current Reflection</label>
+        <label>✨ Current Reflection</label>
         <textarea 
           v-model="mood" 
           placeholder="How are you really feeling?" 
@@ -44,15 +44,20 @@
         <transition-group name="list" tag="ul" class="mood-list">
           <li v-for="m in moods" :key="m.id" class="mood-item">
             <div class="mood-header">
-              <span class="user-pill">{{ m.full_name }}</span>
-              <span class="time-stamp">{{ formatTime(m.created_at) }}</span>
+              <div class="user-info">
+                <span class="user-pill">{{ m.full_name }}</span>
+                <span class="time-stamp">{{ formatTime(m.created_at) }}</span>
+              </div>
+              <button @click="deleteMood(m.id)" class="delete-btn" title="Remove">
+                🗑️
+              </button>
             </div>
             <p class="mood-content">{{ m.mood_text }}</p>
           </li>
         </transition-group>
         
         <div v-if="moods.length === 0" class="empty-state">
-          <p>No reflections yet. Be the first to share.</p>
+          No reflections yet. Be the first to share.
         </div>
       </div>
     </div>
@@ -88,8 +93,7 @@ export default {
 
       this.isSubmitting = true;
       this.errorMessage = "";
-      this.aiAdvice = "";
-
+      
       try {
         // 1. Save to Database
         await api.post("/moods", { 
@@ -101,12 +105,12 @@ export default {
         const reflectionText = this.mood;
         this.aiAdvice = await getAIResponse(reflectionText);
         
-        // 3. Reset Form & Refresh
+        // 3. Reset & Refresh
         this.name = "";
         this.mood = "";
         await this.loadMoods();
       } catch (err) {
-        this.errorMessage = err.response?.data?.error || "Connection error.";
+        this.errorMessage = err.response?.data?.error || "Error saving reflection.";
       } finally {
         this.isSubmitting = false;
       }
@@ -118,6 +122,15 @@ export default {
       } catch (err) {
         console.error("Load error:", err);
       }
+    },
+    async deleteMood(id) {
+      if (!confirm("Remove this reflection?")) return;
+      try {
+        await api.delete(`/moods/${id}`);
+        this.moods = this.moods.filter(m => m.id !== id);
+      } catch (err) {
+        alert("Could not delete.");
+      }
     }
   },
   mounted() {
@@ -127,42 +140,47 @@ export default {
 </script>
 
 <style scoped>
+/* Full Page Centering */
 .form-wrapper { 
   display: flex; 
   flex-direction: column; 
   gap: 1.5rem; 
   max-width: 500px;
-  margin: 0 auto;
+  width: 90%; 
+  margin: 40px auto; 
+  padding-bottom: 40px;
 }
 
 /* Glassmorphism Input Card */
 .input-card {
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 1.5rem;
-  border-radius: 24px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  padding: 2rem;
+  border-radius: 28px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-.field { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.2rem; }
+.field { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
 
 label { 
   color: #a5b4fc; 
-  font-size: 0.7rem; 
+  font-size: 0.75rem; 
   font-weight: 800; 
   text-transform: uppercase; 
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  margin-left: 4px;
 }
 
 input, textarea { 
   background: rgba(0, 0, 0, 0.2); 
-  border: 1px solid rgba(255, 255, 255, 0.1); 
-  border-radius: 12px; 
-  padding: 14px; 
+  border: 1px solid rgba(255, 255, 255, 0.08); 
+  border-radius: 16px; 
+  padding: 16px; 
   color: #fff; 
   font-size: 1rem; 
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
@@ -170,9 +188,9 @@ input, textarea {
 
 input:focus, textarea:focus { 
   outline: none; 
-  background: rgba(0, 0, 0, 0.3); 
+  background: rgba(255, 255, 255, 0.05); 
   border-color: #818cf8; 
-  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.15); 
+  box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2); 
 }
 
 /* Submit Button & Loader */
@@ -181,107 +199,93 @@ input:focus, textarea:focus {
   background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); 
   color: white; 
   border: none; 
-  padding: 16px; 
-  border-radius: 14px; 
+  padding: 18px; 
+  border-radius: 16px; 
   font-weight: 700; 
+  font-size: 1rem;
   cursor: pointer; 
   transition: all 0.3s ease;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+  display: flex; justify-content: center;
 }
 
 .submit-btn:hover:not(:disabled) { 
-  transform: translateY(-2px); 
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+  transform: translateY(-3px); 
+  box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.4);
 }
 
-.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
 .loader {
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(255,255,255,0.3);
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
   border-radius: 50%;
   border-top-color: #fff;
   animation: spin 0.8s linear infinite;
 }
 
-/* AI Advice Card */
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* AI Insight Card */
 .ai-card {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  padding: 1.2rem;
-  border-radius: 18px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  padding: 1.5rem;
+  border-radius: 20px;
   position: relative;
-  color: #e9d5ff;
+  color: #f3e8ff;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .ai-badge {
-  background: #a855f7;
-  color: white;
-  font-size: 0.6rem;
-  font-weight: 900;
-  padding: 2px 8px;
-  border-radius: 20px;
-  width: fit-content;
-  margin-bottom: 8px;
+  background: #a855f7; color: #fff; font-size: 0.6rem;
+  font-weight: 900; padding: 2px 8px; border-radius: 10px;
+  width: fit-content; margin-bottom: 8px; font-style: normal;
 }
 
 .close-ai {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  color: #a855f7;
-  cursor: pointer;
+  position: absolute; top: 12px; right: 12px;
+  background: none; border: none; color: #a855f7; cursor: pointer;
 }
 
-/* History List Styling */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
+/* History List */
+.section-header { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
+.section-header h3 { color: #f8fafc; font-size: 1.25rem; font-weight: 600; }
+.count-badge { background: rgba(129, 140, 248, 0.1); color: #818cf8; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; }
 
-.count-badge {
-  background: rgba(255,255,255,0.1);
-  padding: 2px 10px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  color: #818cf8;
-}
+.mood-list { list-style: none; padding: 0; margin: 0; }
 
 .mood-item { 
   background: rgba(255, 255, 255, 0.03); 
-  border-radius: 16px; 
-  padding: 14px; 
+  border-radius: 18px; 
+  padding: 16px; 
   margin-bottom: 12px; 
+  border: 1px solid rgba(255, 255, 255, 0.05);
   border-left: 4px solid #6366f1;
-  transition: transform 0.2s ease;
 }
 
-.mood-item:hover { transform: scale(1.02); background: rgba(255, 255, 255, 0.05); }
-
-.mood-header { display: flex; justify-content: space-between; align-items: center; }
-
-.user-pill { color: #818cf8; font-size: 0.8rem; font-weight: 700; }
-
+.mood-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.user-info { display: flex; flex-direction: column; }
+.user-pill { color: #818cf8; font-size: 0.85rem; font-weight: 700; }
 .time-stamp { color: #64748b; font-size: 0.7rem; }
 
-.mood-content { color: #cbd5e1; font-size: 0.95rem; margin-top: 6px; line-height: 1.4; }
+.delete-btn {
+  background: none; border: none; cursor: pointer; font-size: 1rem;
+  opacity: 0.4; transition: opacity 0.2s;
+}
+.mood-item:hover .delete-btn { opacity: 1; }
 
-/* Animations */
-@keyframes spin { to { transform: rotate(360deg); } }
+.mood-content { color: #cbd5e1; font-size: 0.95rem; margin-top: 8px; }
 
-.slide-down-enter-active, .slide-down-leave-active { transition: all 0.4s ease; }
-.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-20px); }
+/* Custom Scrollbar */
+.scroll-area { max-height: 400px; overflow-y: auto; }
+.scroll-area::-webkit-scrollbar { width: 6px; }
+.scroll-area::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 
-.list-enter-active, .list-leave-active { transition: all 0.5s ease; }
-.list-enter-from { opacity: 0; transform: translateX(-30px); }
-.list-leave-to { opacity: 0; transform: scale(0.5); }
+/* Transitions */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+.list-enter-active, .list-leave-active { transition: all 0.4s ease; }
+.list-enter-from { opacity: 0; transform: translateY(20px); }
+.list-leave-to { opacity: 0; transform: scale(0.9); }
 </style>
