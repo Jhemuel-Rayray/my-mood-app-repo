@@ -30,9 +30,7 @@
       </button>
       
       <transition name="fade">
-        <p v-if="errorMessage" class="error-msg" style="color: #fb7185; font-size: 0.8rem; margin-top: 10px;">
-          {{ errorMessage }}
-        </p>
+        <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
       </transition>
     </div>
 
@@ -58,7 +56,7 @@
           </li>
         </transition-group>
         
-        <div v-if="moods.length === 0" class="empty-state" style="color: #64748b; text-align: center; margin-top: 20px;">
+        <div v-if="moods.length === 0" class="empty-state">
           No reflections yet. Be the first to share.
         </div>
       </div>
@@ -88,10 +86,6 @@ export default {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     },
     async submitMood() {
-      // Pinagawa ni Sir: Log the event and data
-      console.log("User clicked submit button"); 
-      console.log("Mood value entered:", this.mood); 
-
       if (!this.name.trim() || !this.mood.trim()) {
         this.errorMessage = "Please fill both fields";
         return;
@@ -101,35 +95,22 @@ export default {
       this.errorMessage = "";
       
       try {
-        // Pinagawa ni Sir: Gamit ang fetch sa localhost:3000
-        // TANDAAN: Palitan ang URL kung Render ang gamit mo
-        const response = await fetch("http://localhost:3000/moods", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            name: this.name, 
-            reflection: this.mood 
-          })
+        // 1. Save to Database
+        await api.post("/moods", { 
+          name: this.name, 
+          reflection: this.mood 
         });
-
-        // Pinagawa ni Sir: Log the API response status
-        console.log("API response status:", response.status); 
-
-        if (response.ok) {
-          // Get AI Response
-          const reflectionText = this.mood;
-          this.aiAdvice = await getAIResponse(reflectionText);
-          
-          // Clear inputs and reload list
-          this.name = "";
-          this.mood = "";
-          await this.loadMoods();
-        } else {
-          throw new Error("Failed to save");
-        }
+        
+        // 2. Get AI Response
+        const reflectionText = this.mood;
+        this.aiAdvice = await getAIResponse(reflectionText);
+        
+        // 3. Reset & Refresh
+        this.name = "";
+        this.mood = "";
+        await this.loadMoods();
       } catch (err) {
-        console.error("Submission error:", err);
-        this.errorMessage = "Error saving reflection.";
+        this.errorMessage = err.response?.data?.error || "Error saving reflection.";
       } finally {
         this.isSubmitting = false;
       }
