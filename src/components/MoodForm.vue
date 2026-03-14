@@ -86,12 +86,10 @@ export default {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     },
     async submitMood() {
-  // BUG HERE: moodValue is not defined
-  console.log("User mood value:", moodValue); 
-
-  console.log("User clicked submit button"); 
-  // ... rest of the code
-}
+      if (!this.name.trim() || !this.mood.trim()) {
+        this.errorMessage = "Please fill both fields";
+        return;
+      }
 
       this.isSubmitting = true;
       this.errorMessage = "";
