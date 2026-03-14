@@ -30,9 +30,7 @@
       </button>
       
       <transition name="fade">
-        <p v-if="errorMessage" class="error-msg" style="color: #fb7185; margin-top: 10px; font-size: 0.85rem;">
-          {{ errorMessage }}
-        </p>
+        <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
       </transition>
     </div>
 
@@ -58,7 +56,7 @@
           </li>
         </transition-group>
         
-        <div v-if="moods.length === 0" class="empty-state" style="text-align: center; color: #64748b; margin-top: 20px;">
+        <div v-if="moods.length === 0" class="empty-state">
           No reflections yet. Be the first to share.
         </div>
       </div>
@@ -88,16 +86,12 @@ export default {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     },
     async submitMood() {
-      // 🔴 BUG #1 – Undefined Variable (Frontend)
-      // I-trigger nito ang ReferenceError dahil wala tayong 'moodValue'
-      console.log("User mood value:", moodValue); 
+  // BUG HERE: moodValue is not defined
+  console.log("User mood value:", moodValue); 
 
-      console.log("User clicked submit button");
-
-      if (!this.name.trim() || !this.mood.trim()) {
-        this.errorMessage = "Please fill both fields";
-        return;
-      }
+  console.log("User clicked submit button"); 
+  // ... rest of the code
+}
 
       this.isSubmitting = true;
       this.errorMessage = "";
