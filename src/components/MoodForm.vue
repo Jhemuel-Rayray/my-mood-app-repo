@@ -78,7 +78,7 @@ export default {
       mood: "",
       moods: [],
       errorMessage: "",
-      successMessage: "", // Idinagdag para sa Step 3
+      successMessage: "", 
       aiAdvice: "",
       isSubmitting: false
     };
@@ -97,32 +97,29 @@ export default {
 
       this.isSubmitting = true;
       this.errorMessage = "";
-      this.successMessage = ""; // Reset success message
+      this.successMessage = ""; 
       
       try {
-        // 1. Save to Database
+        // 1. Save to Database (Secure API call)
         const response = await api.post("/moods", { 
           name: this.name, 
           reflection: this.mood 
         });
         
-        // Isset ang success message para sa Step 3 screenshot
+        // Ito ang magpapakita ng "Mood added successfully!" sa screen
         this.successMessage = response.data.message || "Mood added successfully!";
         
         // 2. Get AI Response
         const reflectionText = this.mood;
         this.aiAdvice = await getAIResponse(reflectionText);
         
-        // 3. Reset & Refresh
-        this.name = "";
-        this.mood = "";
+        // 3. Refresh the list below
         await this.loadMoods();
 
-        // Optional: Mawala ang success message pagkalipas ng 5 segundo
-        setTimeout(() => { this.successMessage = ""; }, 5000);
+        // NOTE: Inalis natin ang this.name = "" at this.mood = "" 
+        // para manatili ang input mo sa screen para sa iyong screenshot.
 
       } catch (err) {
-        // Kapag vulnerable pa (Step 1), dito papasok ang "SQL Syntax Error"
         this.errorMessage = err.response?.data?.error || "Error saving reflection.";
       } finally {
         this.isSubmitting = false;
