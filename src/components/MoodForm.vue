@@ -55,7 +55,7 @@
                 🗑️
               </button>
             </div>
-           <p class="mood-content" v-html="m.mood_text"></p>
+            <p class="mood-content" v-html="m.mood_text"></p>
           </li>
         </transition-group>
         
