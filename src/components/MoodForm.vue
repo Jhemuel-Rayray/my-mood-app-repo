@@ -30,7 +30,10 @@
       </button>
       
       <transition name="fade">
-        <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
+        <div class="feedback-container">
+          <p v-if="errorMessage" class="error-msg">{{ errorMessage }}</p>
+          <p v-if="successMessage" class="success-msg">{{ successMessage }}</p>
+        </div>
       </transition>
     </div>
 
@@ -75,6 +78,7 @@ export default {
       mood: "",
       moods: [],
       errorMessage: "",
+      successMessage: "", // Idinagdag para sa Step 3
       aiAdvice: "",
       isSubmitting: false
     };
@@ -93,13 +97,17 @@ export default {
 
       this.isSubmitting = true;
       this.errorMessage = "";
+      this.successMessage = ""; // Reset success message
       
       try {
         // 1. Save to Database
-        await api.post("/moods", { 
+        const response = await api.post("/moods", { 
           name: this.name, 
           reflection: this.mood 
         });
+        
+        // Isset ang success message para sa Step 3 screenshot
+        this.successMessage = response.data.message || "Mood added successfully!";
         
         // 2. Get AI Response
         const reflectionText = this.mood;
@@ -109,7 +117,12 @@ export default {
         this.name = "";
         this.mood = "";
         await this.loadMoods();
+
+        // Optional: Mawala ang success message pagkalipas ng 5 segundo
+        setTimeout(() => { this.successMessage = ""; }, 5000);
+
       } catch (err) {
+        // Kapag vulnerable pa (Step 1), dito papasok ang "SQL Syntax Error"
         this.errorMessage = err.response?.data?.error || "Error saving reflection.";
       } finally {
         this.isSubmitting = false;
@@ -140,6 +153,25 @@ export default {
 </script>
 
 <style scoped>
+/* Idagdag mo itong styles na ito sa <style> section mo */
+.feedback-container {
+  margin-top: 1rem;
+  text-align: center;
+  min-height: 24px;
+}
+
+.error-msg {
+  color: #ff4d4d;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.success-msg {
+  color: #4ade80; /* Green color para sa secure result */
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 /* Full Page Centering */
 .form-wrapper { 
   display: flex; 
